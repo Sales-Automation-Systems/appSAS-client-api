@@ -26,11 +26,15 @@ info:
 
     ## 🔑 Authentication
 
-    All API requests require a Bearer token in the Authorization header:
+    Authentication is handled via your unique **Client ID** in the URL path:
+    
     ```
-    Authorization: Bearer YOUR_API_KEY
+    POST https://rest.salesautomation.systems/attribution/{your_client_id}
     ```
-    Contact Sales Automation Systems to obtain your API key.
+    
+    Your Client ID is a unique identifier generated specifically for your account. Contact Sales Automation Systems to obtain your Client ID.
+    
+    > **No API keys or Bearer tokens required** - your Client ID in the URL is your authentication.
 
     ---
 
@@ -52,9 +56,6 @@ info:
 servers:
   - url: https://rest.salesautomation.systems
     description: Production server
-
-security:
-  - bearerAuth: []
 
 tags:
   - name: Contact Attribution
@@ -85,7 +86,10 @@ paths:
           required: true
           schema:
             type: string
-          description: Your unique client identifier
+          description: |
+            Your unique Client ID provided by Sales Automation Systems. 
+            This serves as your authentication - no additional API keys required.
+          example: "abc123xyz"
       requestBody:
         required: true
         content:
@@ -121,14 +125,14 @@ paths:
                 status: "error"
                 message: "Invalid email format"
         '401':
-          description: Unauthorized - Invalid or missing API key
+          description: Unauthorized - Invalid Client ID
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
               example:
                 status: "error"
-                message: "Invalid or missing API key"
+                message: "Invalid Client ID"
 
   /attribution/{client_id}#company:
     post:
@@ -154,7 +158,10 @@ paths:
           required: true
           schema:
             type: string
-          description: Your unique client identifier
+          description: |
+            Your unique Client ID provided by Sales Automation Systems. 
+            This serves as your authentication - no additional API keys required.
+          example: "abc123xyz"
       requestBody:
         required: true
         content:
@@ -188,22 +195,16 @@ paths:
                 status: "error"
                 message: "Invalid domain format"
         '401':
-          description: Unauthorized - Invalid or missing API key
+          description: Unauthorized - Invalid Client ID
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
               example:
                 status: "error"
-                message: "Invalid or missing API key"
+                message: "Invalid Client ID"
 
 components:
-  securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      description: API key provided by Sales Automation Systems
-
   schemas:
     EventType:
       type: string
