@@ -1,0 +1,27 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Sales Automation Systems API</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Real-time event tracking and webhook API for Sales Automation Systems" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  </head>
+  <body>
+    <div id="app"></div>
+    <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+    <script>
+      Scalar.createApiReference('#app', {
+        url: '/openapi.yaml',
+        proxyUrl: 'https://proxy.scalar.com',
+        darkMode: true,
+        theme: 'default',
+        layout: 'modern',
+        authentication: {
+          preferredSecurityScheme: 'bearerAuth',
+        },
+      })
+    </script>
+  </body>
+</html>
+

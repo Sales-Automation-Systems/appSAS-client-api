@@ -1,0 +1,220 @@
+openapi: 3.0.3
+info:
+  title: Sales Automation Systems Client API
+  description: |
+    Real-time event tracking and webhook API for Sales Automation Systems. 
+    This API allows you to send us real-time events from your website and customer systems, 
+    and configure webhooks to receive our outbound lead data.
+
+    ## Setup Guides
+    - [How To Setup Guide Video](https://www.loom.com/share/10142595493d4523be825e872d413f91?sid=e1ea2827-7cce-4318-a489-c3f34ca6f3fa)
+    - [How to Setup HubSpot via Zapier Video](https://www.loom.com/share/a489487de1844a54a6f318fb3ea23842?sid=dc22ac70-b823-401d-b9c0-b075b9dcdc90)
+  version: 1.0.0
+  contact:
+    name: Sales Automation Systems
+    url: https://salesautomation.systems
+
+servers:
+  - url: https://rest.salesautomation.systems
+    description: Production server
+
+security:
+  - bearerAuth: []
+
+paths:
+  /attribution/{client_id}/contact:
+    post:
+      operationId: trackContactAttribution
+      summary: Contact Attribution
+      description: Send real-time events to track individual contact actions and attribution data using email addresses.
+      tags:
+        - Attribution
+      parameters:
+        - name: client_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Your unique client identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContactAttributionRequest'
+            example:
+              email: "user@example.com"
+              event_type: "sign_up"
+              event_time: "2025-06-30T14:30:00Z"
+              first_name: "John"
+              last_name: "Doe"
+              company_name: "Example Corp"
+              campaign_id: "summer_2025"
+      responses:
+        '200':
+          description: Event successfully recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttributionResponse'
+              example:
+                status: "success"
+                message: "Contact event processed successfully"
+                event_id: "evt_contact_abc123xyz"
+        '400':
+          description: Bad request - Invalid input data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - Invalid or missing API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /attribution/{client_id}/company:
+    post:
+      operationId: trackCompanyAttribution
+      summary: Company Attribution
+      description: Send real-time events to track company-wide actions and attribution data using domain names.
+      tags:
+        - Attribution
+      parameters:
+        - name: client_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Your unique client identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompanyAttributionRequest'
+            example:
+              domain: "example.com"
+              event_type: "sign_up"
+              event_time: "2025-06-30T14:30:00Z"
+              company_name: "Example Corp"
+              campaign_id: "enterprise_q4"
+      responses:
+        '200':
+          description: Event successfully recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttributionResponse'
+              example:
+                status: "success"
+                message: "Company event processed successfully"
+                event_id: "evt_company_xyz789abc"
+        '400':
+          description: Bad request - Invalid input data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - Invalid or missing API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: API key provided by Sales Automation Systems
+
+  schemas:
+    EventType:
+      type: string
+      enum:
+        - sign_up
+        - meeting_booked
+        - paying_customer
+        - website_visitor
+        - dnc
+      description: Type of attribution event
+
+    ContactAttributionRequest:
+      type: object
+      required:
+        - email
+        - event_type
+        - event_time
+      properties:
+        email:
+          type: string
+          format: email
+          description: Email address of the contact
+        event_type:
+          $ref: '#/components/schemas/EventType'
+        event_time:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp when the event occurred
+        first_name:
+          type: string
+          description: Contact's first name
+        last_name:
+          type: string
+          description: Contact's last name
+        company_name:
+          type: string
+          description: Name of the contact's company
+        campaign_id:
+          type: string
+          description: Campaign identifier for attribution tracking
+
+    CompanyAttributionRequest:
+      type: object
+      required:
+        - domain
+        - event_type
+        - event_time
+      properties:
+        domain:
+          type: string
+          description: Company domain for company-wide attribution
+        event_type:
+          $ref: '#/components/schemas/EventType'
+        event_time:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp when the event occurred
+        company_name:
+          type: string
+          description: Name of the company
+        campaign_id:
+          type: string
+          description: Campaign identifier for attribution tracking
+
+    AttributionResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "success"
+        message:
+          type: string
+          description: Human-readable response message
+        event_id:
+          type: string
+          description: Unique identifier for the recorded event
+
+    ErrorResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "error"
+        message:
+          type: string
+          description: Error description
+
