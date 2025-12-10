@@ -48,6 +48,17 @@ info:
     | `website_visitor` | Website visit tracking |
     | `dnc` | Do not contact flag |
 
+    ---
+
+    ## 🔄 How It Works
+
+    This API uses a **single endpoint** that accepts two types of attribution events:
+
+    - **Contact Attribution**: Include an `email` field to track individual contacts
+    - **Company Attribution**: Include a `domain` field to track companies
+
+    The system automatically determines the attribution type based on which field you provide.
+
   version: 1.0.0
   contact:
     name: Sales Automation Systems
@@ -59,98 +70,32 @@ servers:
 
 tags:
   - name: Contact Attribution
-    description: Track individual contact actions using email addresses
+    description: |
+      Track individual contact actions using email addresses.
+      
+      Send events with an `email` field to attribute actions to specific contacts.
   - name: Company Attribution
-    description: Track company-wide actions using domain names
+    description: |
+      Track company-wide actions using domain names.
+      
+      Send events with a `domain` field to attribute actions to companies.
 
 paths:
   /attribution/{client_id}:
     post:
-      operationId: trackContactAttribution
-      summary: Contact Attribution
+      operationId: trackAttribution
+      summary: Track Attribution Event
       description: |
-        Send real-time events to track individual contact actions and attribution data using **email addresses**.
+        Send real-time attribution events to track contact or company actions.
         
-        The system identifies this as a contact event when the `email` field is present in the request body.
+        **This single endpoint handles both Contact and Company attribution:**
         
-        ### Use Cases
-        - Track when a contact signs up on your website
-        - Record meeting bookings for specific contacts
-        - Attribute conversions to individual contacts
-        - Mark contacts as paying customers
+        - **Contact Attribution**: Include `email` in the request body
+        - **Company Attribution**: Include `domain` in the request body
+        
+        The system automatically determines the type based on which field is present.
       tags:
         - Contact Attribution
-      parameters:
-        - name: client_id
-          in: path
-          required: true
-          schema:
-            type: string
-          description: |
-            Your unique Client ID provided by Sales Automation Systems. 
-            This serves as your authentication - no additional API keys required.
-          example: "abc123xyz"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ContactAttributionRequest'
-            example:
-              email: "user@example.com"
-              event_type: "sign_up"
-              event_time: "2025-06-30T14:30:00Z"
-              first_name: "John"
-              last_name: "Doe"
-              company_name: "Example Corp"
-              campaign_id: "summer_2025"
-      responses:
-        '200':
-          description: Event successfully recorded
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AttributionResponse'
-              example:
-                status: "success"
-                message: "Contact event processed successfully"
-                event_id: "evt_contact_abc123xyz"
-        '400':
-          description: Bad request - Invalid input data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                status: "error"
-                message: "Invalid email format"
-        '401':
-          description: Unauthorized - Invalid Client ID
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                status: "error"
-                message: "Invalid Client ID"
-
-  /attribution/{client_id}#company:
-    post:
-      operationId: trackCompanyAttribution
-      summary: Company Attribution
-      description: |
-        Send real-time events to track company-wide actions and attribution data using **domain names**.
-        
-        The system identifies this as a company event when the `domain` field is present in the request body.
-        
-        ### Use Cases
-        - Track when a company visits your website
-        - Record meetings booked with companies
-        - Attribute conversions at the company level
-        - Mark companies as paying customers
-        
-        > **Note:** This endpoint uses the same URL as Contact Attribution. The backend differentiates based on the presence of `domain` vs `email` in the request body.
-      tags:
         - Company Attribution
       parameters:
         - name: client_id
@@ -167,13 +112,30 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CompanyAttributionRequest'
-            example:
-              domain: "example.com"
-              event_type: "sign_up"
-              event_time: "2025-06-30T14:30:00Z"
-              company_name: "Example Corp"
-              campaign_id: "enterprise_q4"
+              oneOf:
+                - $ref: '#/components/schemas/ContactAttributionRequest'
+                - $ref: '#/components/schemas/CompanyAttributionRequest'
+            examples:
+              contact_attribution:
+                summary: Contact Attribution
+                description: Track events for individual contacts using their email address
+                value:
+                  email: "user@example.com"
+                  event_type: "sign_up"
+                  event_time: "2025-06-30T14:30:00Z"
+                  first_name: "John"
+                  last_name: "Doe"
+                  company_name: "Example Corp"
+                  campaign_id: "summer_2025"
+              company_attribution:
+                summary: Company Attribution
+                description: Track events for companies using their domain name
+                value:
+                  domain: "example.com"
+                  event_type: "sign_up"
+                  event_time: "2025-06-30T14:30:00Z"
+                  company_name: "Example Corp"
+                  campaign_id: "enterprise_q4"
       responses:
         '200':
           description: Event successfully recorded
@@ -181,10 +143,19 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AttributionResponse'
-              example:
-                status: "success"
-                message: "Company event processed successfully"
-                event_id: "evt_company_xyz789abc"
+              examples:
+                contact_success:
+                  summary: Contact Attribution Success
+                  value:
+                    status: "success"
+                    message: "Contact event processed successfully"
+                    event_id: "evt_contact_abc123xyz"
+                company_success:
+                  summary: Company Attribution Success
+                  value:
+                    status: "success"
+                    message: "Company event processed successfully"
+                    event_id: "evt_company_xyz789abc"
         '400':
           description: Bad request - Invalid input data
           content:
@@ -193,7 +164,7 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
               example:
                 status: "error"
-                message: "Invalid domain format"
+                message: "Invalid email or domain format"
         '401':
           description: Unauthorized - Invalid Client ID
           content:
@@ -218,6 +189,8 @@ components:
 
     ContactAttributionRequest:
       type: object
+      title: Contact Attribution
+      description: Request body for tracking contact attribution events
       required:
         - email
         - event_type
@@ -248,6 +221,8 @@ components:
 
     CompanyAttributionRequest:
       type: object
+      title: Company Attribution
+      description: Request body for tracking company attribution events
       required:
         - domain
         - event_type
