@@ -20,8 +20,68 @@
         authentication: {
           preferredSecurityScheme: 'bearerAuth',
         },
+        customCss: `
+          /* SAS Brand Colors */
+          :root {
+            --scalar-color-1: #ffffff;
+            --scalar-color-2: #e0e0e0;
+            --scalar-color-3: #a0a0a0;
+            --scalar-color-accent: #48a1f8;
+            --scalar-color-green: #598263;
+            --scalar-color-orange: #ed7445;
+            --scalar-color-blue: #48a1f8;
+            --scalar-background-1: #040403;
+            --scalar-background-2: #0d0d0c;
+            --scalar-background-3: #161615;
+            --scalar-border-color: #2a2a28;
+          }
+          
+          /* Primary accent color - Cyan Blue */
+          .scalar-app a {
+            color: #48a1f8;
+          }
+          
+          /* POST method badges - Orange */
+          .scalar-app [class*="post"] .scalar-api-client__method,
+          .scalar-app .method-post {
+            background-color: #ed7445 !important;
+          }
+          
+          /* Success states - Viridian Green */
+          .scalar-app .response-200,
+          .scalar-app [class*="success"] {
+            border-color: #598263;
+          }
+          
+          /* Sidebar active states */
+          .scalar-app .sidebar-item--active {
+            border-left-color: #48a1f8;
+          }
+          
+          /* Button hover states */
+          .scalar-app button:hover {
+            border-color: #48a1f8;
+          }
+          
+          /* Code block styling */
+          .scalar-app pre {
+            background-color: #0d0d0c;
+            border: 1px solid #2a2a28;
+          }
+          
+          /* Headers and titles */
+          .scalar-app h1,
+          .scalar-app h2,
+          .scalar-app h3 {
+            color: #ffffff;
+          }
+          
+          /* Tag colors */
+          .scalar-app .tag {
+            background-color: #598263;
+          }
+        `,
       })
     </script>
   </body>
 </html>
-

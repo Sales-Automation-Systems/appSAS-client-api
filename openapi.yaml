@@ -6,9 +6,44 @@ info:
     This API allows you to send us real-time events from your website and customer systems, 
     and configure webhooks to receive our outbound lead data.
 
-    ## Setup Guides
-    - [How To Setup Guide Video](https://www.loom.com/share/10142595493d4523be825e872d413f91?sid=e1ea2827-7cce-4318-a489-c3f34ca6f3fa)
-    - [How to Setup HubSpot via Zapier Video](https://www.loom.com/share/a489487de1844a54a6f318fb3ea23842?sid=dc22ac70-b823-401d-b9c0-b075b9dcdc90)
+    ---
+
+    ## 📹 Video Tutorials
+
+    ### Getting Started Setup Guide
+    Learn how to set up the Sales Automation Systems API in just a few minutes.
+    
+    [▶️ Watch Setup Guide Video](https://www.loom.com/share/10142595493d4523be825e872d413f91?sid=e1ea2827-7cce-4318-a489-c3f34ca6f3fa)
+
+    ---
+
+    ### HubSpot Integration via Zapier
+    Step-by-step guide to integrating with HubSpot using Zapier.
+    
+    [▶️ Watch HubSpot Setup Video](https://www.loom.com/share/a489487de1844a54a6f318fb3ea23842?sid=dc22ac70-b823-401d-b9c0-b075b9dcdc90)
+
+    ---
+
+    ## 🔑 Authentication
+
+    All API requests require a Bearer token in the Authorization header:
+    ```
+    Authorization: Bearer YOUR_API_KEY
+    ```
+    Contact Sales Automation Systems to obtain your API key.
+
+    ---
+
+    ## 📊 Event Types
+
+    | Event Type | Description |
+    |------------|-------------|
+    | `sign_up` | New user registration |
+    | `meeting_booked` | Meeting scheduled |
+    | `paying_customer` | Conversion to paying customer |
+    | `website_visitor` | Website visit tracking |
+    | `dnc` | Do not contact flag |
+
   version: 1.0.0
   contact:
     name: Sales Automation Systems
@@ -21,14 +56,29 @@ servers:
 security:
   - bearerAuth: []
 
+tags:
+  - name: Contact Attribution
+    description: Track individual contact actions using email addresses
+  - name: Company Attribution
+    description: Track company-wide actions using domain names
+
 paths:
-  /attribution/{client_id}/contact:
+  /attribution/{client_id}:
     post:
       operationId: trackContactAttribution
       summary: Contact Attribution
-      description: Send real-time events to track individual contact actions and attribution data using email addresses.
+      description: |
+        Send real-time events to track individual contact actions and attribution data using **email addresses**.
+        
+        The system identifies this as a contact event when the `email` field is present in the request body.
+        
+        ### Use Cases
+        - Track when a contact signs up on your website
+        - Record meeting bookings for specific contacts
+        - Attribute conversions to individual contacts
+        - Mark contacts as paying customers
       tags:
-        - Attribution
+        - Contact Attribution
       parameters:
         - name: client_id
           in: path
@@ -67,20 +117,37 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: "error"
+                message: "Invalid email format"
         '401':
           description: Unauthorized - Invalid or missing API key
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: "error"
+                message: "Invalid or missing API key"
 
-  /attribution/{client_id}/company:
+  /attribution/{client_id}#company:
     post:
       operationId: trackCompanyAttribution
       summary: Company Attribution
-      description: Send real-time events to track company-wide actions and attribution data using domain names.
+      description: |
+        Send real-time events to track company-wide actions and attribution data using **domain names**.
+        
+        The system identifies this as a company event when the `domain` field is present in the request body.
+        
+        ### Use Cases
+        - Track when a company visits your website
+        - Record meetings booked with companies
+        - Attribute conversions at the company level
+        - Mark companies as paying customers
+        
+        > **Note:** This endpoint uses the same URL as Contact Attribution. The backend differentiates based on the presence of `domain` vs `email` in the request body.
       tags:
-        - Attribution
+        - Company Attribution
       parameters:
         - name: client_id
           in: path
@@ -117,12 +184,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: "error"
+                message: "Invalid domain format"
         '401':
           description: Unauthorized - Invalid or missing API key
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: "error"
+                message: "Invalid or missing API key"
 
 components:
   securitySchemes:
@@ -152,7 +225,7 @@ components:
         email:
           type: string
           format: email
-          description: Email address of the contact
+          description: Email address of the contact (required for contact attribution)
         event_type:
           $ref: '#/components/schemas/EventType'
         event_time:
@@ -181,7 +254,7 @@ components:
       properties:
         domain:
           type: string
-          description: Company domain for company-wide attribution
+          description: Company domain for company-wide attribution (required for company attribution)
         event_type:
           $ref: '#/components/schemas/EventType'
         event_time:
@@ -217,4 +290,3 @@ components:
         message:
           type: string
           description: Error description
-
