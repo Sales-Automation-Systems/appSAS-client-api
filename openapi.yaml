@@ -38,15 +38,14 @@ info:
 
     ## ⚠️ Contact vs Company Attribution: Which Should You Use?
 
-    This API accepts two types of attribution - and **choosing the right one is critical** for accurate tracking and avoiding unintended consequences.
+    This endpoint accepts two types of attribution based on which identifier you provide:
 
-    | Use Case | Send `email` (Contact) | Send `domain` (Company) |
-    |----------|------------------------|-------------------------|
-    | **Scope** | Individual person | Entire organization |
-    | **Identifier** | Email address | Company domain |
-    | **Best for** | B2C, individual tracking | B2B, account-based tracking |
+    | To Track... | Include This Field | Leave Empty |
+    |-------------|-------------------|-------------|
+    | **Individual person** | `email` | `domain` |
+    | **Entire company** | `domain` | `email` |
 
-    ### 🚨 Important: Event Type Implications
+    ### 🚨 Critical: Event Type Implications
 
     **`dnc` (Do Not Contact)**
     - With `email`: Blocks **only that specific person**
@@ -55,10 +54,6 @@ info:
     **`paying_customer`**
     - With `email`: Marks **one person** as a customer (use for per-seat/per-user billing)
     - With `domain`: Marks **the whole account** as a customer (use for account-based/company billing)
-
-    **`sign_up` / `meeting_booked` / `website_visitor`**
-    - With `email`: Attributes the action to an individual contact
-    - With `domain`: Attributes the action to the company (useful for anonymous visitors identified by domain)
 
     ---
 
@@ -82,72 +77,60 @@ servers:
     description: Production server
 
 tags:
-  - name: Contact Attribution
+  - name: Attribution
     description: |
-      ## Track Individual Contacts (Email-Based)
+      Track attribution events for contacts or companies.
       
-      Use Contact Attribution when you want to track **specific people** by their email address.
-      
-      ### ✅ Best For
-      - Individual user sign-ups
-      - Personal meeting bookings  
-      - Per-user/per-seat customer tracking
-      - Blocking a specific person from outreach
-      
-      ### ⚠️ When NOT to Use
-      - If you want to track/block an entire company, use **Company Attribution** instead
-      - If your billing is account-based (not per-user), use **Company Attribution** for `paying_customer`
-      
-      ---
-      
-      **Required field:** `email`
-      
-  - name: Company Attribution
-    description: |
-      ## Track Companies (Domain-Based)
-      
-      Use Company Attribution when you want to track **entire organizations** by their domain.
-      
-      ### ✅ Best For
-      - Account-based marketing (ABM)
-      - Company-wide events (e.g., "Acme Inc signed up")
-      - Account-level billing/customer tracking
-      - Blocking an entire organization from outreach
-      
-      ### ⚠️ When NOT to Use
-      - If you want to track a specific person, use **Contact Attribution** instead
-      - If you only want to block one employee (not the whole company), use **Contact Attribution** for `dnc`
-      
-      ---
-      
-      **Required field:** `domain`
+      **Use `email` to track individuals, or `domain` to track entire companies.**
 
 paths:
   /attribution/{client_id}:
     post:
-      operationId: trackContactAttribution
-      summary: Contact Attribution
+      operationId: trackAttribution
+      summary: Track Attribution Event
       description: |
-        Track events for **individual contacts** using their email address.
-        
-        Use this when you want to attribute actions to a **specific person**.
+        Send real-time attribution events to track contact or company actions.
         
         ---
         
-        ## ⚠️ Important Notes
+        ## How It Works
+        
+        This single endpoint handles both **Contact** and **Company** attribution based on which field you include:
+        
+        - **Include `email`** → Tracks/affects an **individual person**
+        - **Include `domain`** → Tracks/affects an **entire company**
+        
+        ---
+        
+        ## ⚠️ Choose Carefully!
         
         ### For `dnc` (Do Not Contact)
-        Using `email` will block outreach to **only this one person**.
         
-        *If you want to block an entire company, use Company Attribution with `domain` instead.*
+        | You Send | What Happens |
+        |----------|--------------|
+        | `email` | Blocks **one person** |
+        | `domain` | Blocks **ENTIRE company** (all employees) |
         
         ### For `paying_customer`
-        Using `email` marks **this individual** as a customer (per-user/per-seat billing).
         
-        *If your billing is account-based, use Company Attribution with `domain` instead.*
+        | You Send | What Happens |
+        |----------|--------------|
+        | `email` | Marks **one person** as customer (per-user billing) |
+        | `domain` | Marks **entire account** as customer (account-based billing) |
+        
+        ---
+        
+        ## Quick Reference
+        
+        | Your Goal | Use |
+        |-----------|-----|
+        | Block one person | `email` + `dnc` |
+        | Block entire company | `domain` + `dnc` |
+        | Individual converted | `email` + `paying_customer` |
+        | Account converted | `domain` + `paying_customer` |
         
       tags:
-        - Contact Attribution
+        - Attribution
       parameters:
         - name: client_id
           in: path
@@ -156,18 +139,18 @@ paths:
             type: string
           description: |
             Your unique Client ID provided by Sales Automation Systems. 
-            This serves as your authentication - no additional API keys required.
+            This serves as your authentication.
           example: "abc123xyz"
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ContactAttributionRequest'
+              $ref: '#/components/schemas/AttributionRequest'
             examples:
-              sign_up:
-                summary: "Sign Up Event"
-                description: Track when an individual signs up
+              contact_signup:
+                summary: "Contact: Sign Up"
+                description: Track when an individual signs up (using email)
                 value:
                   email: "john.doe@example.com"
                   event_type: "sign_up"
@@ -176,8 +159,15 @@ paths:
                   last_name: "Doe"
                   company_name: "Example Corp"
                   campaign_id: "summer_2025"
-              paying_customer:
-                summary: "Paying Customer (per-user)"
+              contact_dnc:
+                summary: "Contact: DNC (one person)"
+                description: Block outreach to ONE specific person
+                value:
+                  email: "jane.smith@example.com"
+                  event_type: "dnc"
+                  event_time: "2025-06-30T14:30:00Z"
+              contact_paying:
+                summary: "Contact: Paying Customer (per-user)"
                 description: Mark an individual as a paying customer
                 value:
                   email: "john.doe@example.com"
@@ -185,132 +175,31 @@ paths:
                   event_time: "2025-06-30T14:30:00Z"
                   first_name: "John"
                   last_name: "Doe"
-                  company_name: "Example Corp"
-              dnc:
-                summary: "Do Not Contact (one person)"
-                description: Block outreach to this specific person only
-                value:
-                  email: "jane.smith@example.com"
-                  event_type: "dnc"
-                  event_time: "2025-06-30T14:30:00Z"
-              meeting_booked:
-                summary: "Meeting Booked"
-                description: Track when a contact books a meeting
-                value:
-                  email: "john.doe@example.com"
-                  event_type: "meeting_booked"
-                  event_time: "2025-06-30T14:30:00Z"
-                  first_name: "John"
-                  last_name: "Doe"
-                  company_name: "Example Corp"
-                  campaign_id: "webinar_june"
-      responses:
-        '200':
-          description: Event successfully recorded
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AttributionResponse'
-              example:
-                status: "success"
-                message: "Contact event processed successfully"
-                event_id: "evt_contact_abc123xyz"
-        '400':
-          description: Bad request - Invalid input data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                status: "error"
-                message: "Invalid email format"
-        '401':
-          description: Unauthorized - Invalid Client ID
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                status: "error"
-                message: "Invalid Client ID"
-
-  /attribution/{client_id}/company:
-    post:
-      operationId: trackCompanyAttribution
-      summary: Company Attribution
-      description: |
-        Track events for **entire companies** using their domain.
-        
-        Use this when you want to attribute actions to an **organization**, not a specific person.
-        
-        ---
-        
-        ## 🚨 Important Warnings
-        
-        ### For `dnc` (Do Not Contact)
-        > ⚠️ **WARNING:** Using `domain` will block outreach to **ALL employees at this company!**
-        
-        *If you only want to block one person, use Contact Attribution with `email` instead.*
-        
-        ### For `paying_customer`
-        Using `domain` marks **the entire account/company** as a customer (account-based billing).
-        
-        *If your billing is per-user/per-seat, use Contact Attribution with `email` instead.*
-        
-      tags:
-        - Company Attribution
-      parameters:
-        - name: client_id
-          in: path
-          required: true
-          schema:
-            type: string
-          description: |
-            Your unique Client ID provided by Sales Automation Systems. 
-            This serves as your authentication - no additional API keys required.
-          example: "abc123xyz"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CompanyAttributionRequest'
-            examples:
-              sign_up:
-                summary: "Sign Up Event (account-level)"
-                description: Track when a company signs up
+              company_signup:
+                summary: "Company: Sign Up"
+                description: Track when a company signs up (using domain)
                 value:
                   domain: "example.com"
                   event_type: "sign_up"
                   event_time: "2025-06-30T14:30:00Z"
                   company_name: "Example Corp"
                   campaign_id: "enterprise_q4"
-              paying_customer:
-                summary: "Paying Customer (account-level)"
-                description: Mark an entire company as a paying customer
-                value:
-                  domain: "example.com"
-                  event_type: "paying_customer"
-                  event_time: "2025-06-30T14:30:00Z"
-                  company_name: "Example Corp"
-                  campaign_id: "enterprise_q4"
-              dnc_warning:
-                summary: "⚠️ Do Not Contact (ENTIRE company)"
+              company_dnc:
+                summary: "⚠️ Company: DNC (ENTIRE company)"
                 description: "WARNING: Blocks ALL employees at this domain!"
                 value:
                   domain: "example.com"
                   event_type: "dnc"
                   event_time: "2025-06-30T14:30:00Z"
                   company_name: "Example Corp"
-              website_visitor:
-                summary: "Website Visitor (company identified)"
-                description: Track when a company visits your website
+              company_paying:
+                summary: "Company: Paying Customer (account)"
+                description: Mark an entire company as a paying customer
                 value:
                   domain: "example.com"
-                  event_type: "website_visitor"
+                  event_type: "paying_customer"
                   event_time: "2025-06-30T14:30:00Z"
                   company_name: "Example Corp"
-                  campaign_id: "homepage"
       responses:
         '200':
           description: Event successfully recorded
@@ -318,10 +207,19 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AttributionResponse'
-              example:
-                status: "success"
-                message: "Company event processed successfully"
-                event_id: "evt_company_xyz789abc"
+              examples:
+                contact_success:
+                  summary: Contact Event Success
+                  value:
+                    status: "success"
+                    message: "Contact event processed successfully"
+                    event_id: "evt_contact_abc123xyz"
+                company_success:
+                  summary: Company Event Success
+                  value:
+                    status: "success"
+                    message: "Company event processed successfully"
+                    event_id: "evt_company_xyz789abc"
         '400':
           description: Bad request - Invalid input data
           content:
@@ -330,7 +228,7 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
               example:
                 status: "error"
-                message: "Invalid domain format"
+                message: "Invalid email or domain format"
         '401':
           description: Unauthorized - Invalid Client ID
           content:
@@ -351,20 +249,15 @@ components:
         - paying_customer
         - website_visitor
         - dnc
-      description: |
-        Type of attribution event.
-        
-        **Note:** The impact of each event type depends on whether you use Contact Attribution (email) or Company Attribution (domain).
+      description: Type of attribution event
 
-    ContactAttributionRequest:
+    AttributionRequest:
       type: object
-      title: Contact Attribution Request
       description: |
-        Request body for tracking **individual contact** events.
+        **Include `email` for Contact Attribution, OR `domain` for Company Attribution.**
         
-        Include `email` to attribute actions to a specific person.
+        ⚠️ For `dnc` events: Using `domain` blocks the ENTIRE company!
       required:
-        - email
         - event_type
         - event_time
       properties:
@@ -372,12 +265,32 @@ components:
           type: string
           format: email
           description: |
-            **Required.** Email address of the contact.
+            **For Contact Attribution (individual tracking).**
             
-            This identifies the specific individual to track.
+            Include this to track/affect a specific person.
+            
+            *Leave empty if using `domain` for company attribution.*
           example: "john.doe@example.com"
+        domain:
+          type: string
+          description: |
+            **For Company Attribution (organization tracking).**
+            
+            Include this to track/affect an entire company.
+            
+            ⚠️ For `dnc`: This blocks ALL employees at this domain!
+            
+            *Leave empty if using `email` for contact attribution.*
+          example: "example.com"
         event_type:
-          $ref: '#/components/schemas/EventType'
+          allOf:
+            - $ref: '#/components/schemas/EventType'
+          description: |
+            Type of attribution event.
+            
+            **Impact depends on whether you use `email` or `domain`:**
+            - `dnc` with email = blocks one person
+            - `dnc` with domain = blocks ENTIRE company
         event_time:
           type: string
           format: date-time
@@ -385,51 +298,12 @@ components:
           example: "2025-06-30T14:30:00Z"
         first_name:
           type: string
-          description: Contact's first name
+          description: Contact's first name (for contact attribution)
           example: "John"
         last_name:
           type: string
-          description: Contact's last name
+          description: Contact's last name (for contact attribution)
           example: "Doe"
-        company_name:
-          type: string
-          description: Name of the contact's company (for reference only)
-          example: "Example Corp"
-        campaign_id:
-          type: string
-          description: Campaign identifier for attribution tracking
-          example: "summer_2025"
-
-    CompanyAttributionRequest:
-      type: object
-      title: Company Attribution Request
-      description: |
-        Request body for tracking **company-wide** events.
-        
-        Include `domain` to attribute actions to an entire organization.
-        
-        ⚠️ **Warning:** For `dnc` events, this will block ALL contacts at this domain!
-      required:
-        - domain
-        - event_type
-        - event_time
-      properties:
-        domain:
-          type: string
-          description: |
-            **Required.** Company domain for organization-wide attribution.
-            
-            This identifies the entire company to track.
-            
-            ⚠️ For `dnc`: Blocks ALL employees at this domain!
-          example: "example.com"
-        event_type:
-          $ref: '#/components/schemas/EventType'
-        event_time:
-          type: string
-          format: date-time
-          description: ISO 8601 timestamp when the event occurred
-          example: "2025-06-30T14:30:00Z"
         company_name:
           type: string
           description: Name of the company
@@ -437,7 +311,7 @@ components:
         campaign_id:
           type: string
           description: Campaign identifier for attribution tracking
-          example: "enterprise_q4"
+          example: "summer_2025"
 
     AttributionResponse:
       type: object
