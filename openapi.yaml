@@ -112,8 +112,8 @@ paths:
           required: true
           schema:
             type: string
-          description: Your unique Client ID (this is your authentication)
-          example: "your_client_id"
+          description: Your unique Client ID provided by Sales Automation Systems (this is your authentication)
+          example: "YOUR_CLIENT_ID"
       requestBody:
         required: true
         content:
