@@ -34,7 +34,7 @@ info:
     | I want to track... | Send this field | Payload includes |
     |--------------------|-----------------|------------------|
     | **A specific person** | `email` | first_name, last_name, company_name |
-    | **An entire company** | `domain` | company_name, industry, employee_count |
+    | **An entire company** | `domain` | company_name |
 
     ---
 
@@ -75,7 +75,7 @@ tags:
       - Per-account/company billing
       - Blocking an entire company from outreach
       
-      **Fields:** domain, event_type, event_time, company_name, industry, employee_count
+      **Fields:** domain, event_type, event_time, company_name
 
 paths:
   /attribution/{client_id}:
@@ -234,32 +234,28 @@ paths:
                   domain: "example.com"
                   event_type: "sign_up"
                   event_time: "2025-06-30T14:30:00Z"
-                  company_name: "Example Corp"
-                  industry: "Technology"
-                  employee_count: 500
+                  company_name: "Example Corporation"
               website_visitor:
                 summary: "Website Visitor"
                 value:
                   domain: "example.com"
                   event_type: "website_visitor"
                   event_time: "2025-06-30T14:30:00Z"
-                  company_name: "Example Corp"
+                  company_name: "Example Corporation"
               paying_customer:
                 summary: "Paying Customer (account-level)"
                 value:
                   domain: "example.com"
                   event_type: "paying_customer"
                   event_time: "2025-06-30T14:30:00Z"
-                  company_name: "Example Corp"
-                  industry: "Technology"
-                  employee_count: 500
+                  company_name: "Example Corporation"
               dnc:
                 summary: "⚠️ Do Not Contact (ENTIRE company)"
                 value:
                   domain: "example.com"
                   event_type: "dnc"
                   event_time: "2025-06-30T14:30:00Z"
-                  company_name: "Example Corp"
+                  company_name: "Example Corporation"
       responses:
         '200':
           description: Event successfully recorded
@@ -368,15 +364,7 @@ components:
         company_name:
           type: string
           description: Name of the company
-          example: "Example Corp"
-        industry:
-          type: string
-          description: Industry sector of the company
-          example: "Technology"
-        employee_count:
-          type: integer
-          description: Number of employees in the company
-          example: 500
+          example: "Example Corporation"
 
     AttributionResponse:
       type: object
