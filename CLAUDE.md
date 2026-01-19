@@ -10,8 +10,7 @@ API documentation for Sales Automation Systems clients - explains how to stream 
 - Static site - no build step
 
 ## Editing
-- Edit openapi.yaml to modify API documentation
-- No build step - pure static files
+- Edit `openapi.yaml` to modify API documentation
 
 ## Notes
 - Client-facing documentation - keep OpenAPI spec accurate
